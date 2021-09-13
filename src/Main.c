@@ -35,6 +35,10 @@ static void ResizeCallback(Window* window, u32 width, u32 height) {
     Renderer_OnWindowResize(data->Renderer, width, height);
 }
 
+static void MousePositionCallback(Window* window, s32 xPos, s32 yPos) {
+    // GameData* data = Window_GetUserData(window);
+}
+
 static void MouseMoveCallback(Window* window, s32 xDelta, s32 yDelta) {
     // GameData* data = Window_GetUserData(window);
 }
@@ -42,6 +46,16 @@ static void MouseMoveCallback(Window* window, s32 xDelta, s32 yDelta) {
 static void KeyCallback(Window* window, KeyCode key, b8 pressed) {
     GameData* data = Window_GetUserData(window);
     switch (key) {
+        case KeyCode_Escape: {
+            if (pressed) {
+                if (Window_IsMouseDisabled(window)) {
+                    Window_EnableMouse(window);
+                } else {
+                    Window_DisableMouse(window);
+                }
+            }
+        } break;
+
         case KeyCode_W: {
             data->WPressed = pressed;
         } break;
@@ -134,6 +148,7 @@ int main() {
     Window_SetUserData(data.Window, &data);
     Window_SetCloseCallback(data.Window, CloseCallback);
     Window_SetResizeCallback(data.Window, ResizeCallback);
+    Window_SetMousePositionCallback(data.Window, MousePositionCallback);
     Window_SetMouseMoveCallback(data.Window, MouseMoveCallback);
     Window_SetKeyCallback(data.Window, KeyCallback);
     Window_SetDrawCallback(data.Window, DrawCallback);

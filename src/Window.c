@@ -79,6 +79,14 @@ static LRESULT CALLBACK WindowCallback(HWND windowHandle, UINT message, WPARAM w
                 }
             } break;
 
+            case WM_MOUSEMOVE: {
+                if (!window->MouseDisabled && window->MousePositionCallback != nil) {
+                    s32 mouseX = GET_X_LPARAM(lParam);
+                    s32 mouseY = GET_X_LPARAM(lParam);
+                    window->MousePositionCallback(window, mouseX, mouseY);
+                }
+            } break;
+
             case WM_INPUT: {
                 if (window->MouseDisabled && window->MouseMoveCallback != nil) {
                     HRAWINPUT inputHandle = cast(HRAWINPUT) lParam;
@@ -107,6 +115,8 @@ static LRESULT CALLBACK WindowCallback(HWND windowHandle, UINT message, WPARAM w
         case value: {        \
             key = name;      \
         } break;
+                        KEY(KeyCode_Escape, VK_ESCAPE)
+
                         KEY(KeyCode_0, 0x30)
                         KEY(KeyCode_1, 0x31)
                         KEY(KeyCode_2, 0x32)
@@ -308,6 +318,10 @@ void Window_SetResizeCallback(Window* window, Window_ResizeCallbackFunc* callbac
     }
 }
 
+void Window_SetMousePositionCallback(Window* window, Window_MousePositionCallbackFunc* callback) {
+    window->MousePositionCallback = callback;
+}
+
 void Window_SetMouseMoveCallback(Window* window, Window_MouseMoveCallbackFunc* callback) {
     window->MouseMoveCallback = callback;
 }
@@ -322,6 +336,10 @@ void Window_SetDrawCallback(Window* window, Window_DrawCallbackFunc* callback) {
 
 void* Window_GetUserData(Window* window) {
     return window->UserData;
+}
+
+b8 Window_IsMouseDisabled(Window* window) {
+    return window->MouseDisabled;
 }
 
 #endif

@@ -108,12 +108,17 @@ static void DrawCallback(Window* window) {
 
     Renderer_Clear(data->Renderer);
 
-    Matrix4x4f circleMatrix = Matrix4x4f_Translation((Vector2f){ .x = -1.0f, .y = 0.0f });
+    static f32 counter = 0.0f;
+    counter += data->Delta; // I know that this is bad to update in draw function
 
-    static f32 rotation = 0.0f;
-    rotation += data->Delta * 1.5f; // I know that this is bad to update in draw function
-    Matrix4x4f squareMatrix =
-        Matrix4x4f_Multiply(Matrix4x4f_Rotate(rotation), Matrix4x4f_Translation((Vector2f){ .x = 1.0f, .y = 0.0f }));
+    Vector2f circlePosition = { .x = -1.0f, .y = sinf(counter * 2.0f) * 3.0f };
+    Vector2f squarePosition = { .x = 1.0f, .y = -4.0f };
+
+    Matrix4x4f circleMatrix = Matrix4x4f_Translation(circlePosition);
+
+    Vector2f direction      = { .x = circlePosition.x - squarePosition.x, .y = circlePosition.y - squarePosition.y };
+    f32 rotation            = atan2f(direction.x, direction.y);
+    Matrix4x4f squareMatrix = Matrix4x4f_Multiply(Matrix4x4f_Scale((Vector2f){ .x = 2.0f, .y = 1.0f }), Matrix4x4f_Multiply(Matrix4x4f_Rotate(rotation), Matrix4x4f_Translation(squarePosition)));
 
     Renderer_DrawIndexed(data->Renderer, data->CircleShader, data->CircleVertexBuffer, data->CircleIndexBuffer, circleMatrix);
     Renderer_DrawIndexed(data->Renderer, data->ColorShader, data->SquareVertexBuffer, data->SquareIndexBuffer, squareMatrix);

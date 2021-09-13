@@ -6,6 +6,7 @@ typedef struct OpenGLVertexBuffer OpenGLVertexBuffer;
 typedef struct OpenGLIndexBuffer OpenGLIndexBuffer;
 
 #include "Defines.h"
+#include "Matrix.h"
 
 typedef struct OpenGLRenderer OpenGLRenderer;
 
@@ -15,14 +16,15 @@ void OpenGLRenderer_Destroy(OpenGLRenderer* renderer);
 void OpenGLRenderer_SetClearColor(OpenGLRenderer* renderer, u8 red, u8 green, u8 blue);
 void OpenGLRenderer_Clear(OpenGLRenderer* renderer);
 
-void OpenGLRenderer_BeginFrameFunc(OpenGLRenderer* renderer);
+void OpenGLRenderer_BeginFrameFunc(OpenGLRenderer* renderer, Matrix4x4f viewMatrix, Matrix4x4f projectionMatrix);
 void OpenGLRenderer_EndFrameFunc(OpenGLRenderer* renderer);
 void OpenGLRenderer_DrawVertexBuffer(
-    OpenGLRenderer* renderer, OpenGLShader* shader, OpenGLVertexBuffer* vertexBuffer, u32 count);
+    OpenGLRenderer* renderer, OpenGLShader* shader, OpenGLVertexBuffer* vertexBuffer, u32 count, Matrix4x4f modelMatrix);
 void OpenGLRenderer_DrawIndexed(OpenGLRenderer* renderer,
                                 OpenGLShader* shader,
                                 OpenGLVertexBuffer* vertexBuffer,
-                                OpenGLIndexBuffer* indexBuffer);
+                                OpenGLIndexBuffer* indexBuffer,
+                                Matrix4x4f modelMatrix);
 
 void OpenGLRenderer_OnWindowResize(OpenGLRenderer* renderer, u32 width, u32 height);
 
@@ -154,6 +156,8 @@ typedef f64 GLclampd;
 
 typedef struct OpenGLRenderer {
     Window* Window;
+    Matrix4x4f ViewMatrix;
+    Matrix4x4f ProjectionMatrix;
     #define OPENGL_FUNCTION(ret, name, ...) ret(_cdecl* name)(__VA_ARGS__);
     OPENGL_FUNCTIONS
     #undef OPENGL_FUNCTION

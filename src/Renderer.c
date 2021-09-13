@@ -52,8 +52,8 @@ void Renderer_Clear(Renderer* renderer) {
     renderer->Clear(renderer->Data);
 }
 
-void Renderer_BeginFrame(Renderer* renderer) {
-    renderer->BeginFrame(renderer->Data);
+void Renderer_BeginFrame(Renderer* renderer, Matrix4x4f viewMatrix, Matrix4x4f projectionMatrix) {
+    renderer->BeginFrame(renderer->Data, viewMatrix, projectionMatrix);
 }
 
 void Renderer_EndFrame(Renderer* renderer) {
@@ -61,13 +61,13 @@ void Renderer_EndFrame(Renderer* renderer) {
 }
 
 void Renderer_DrawVertexBuffer(
-    Renderer* renderer, Shader* shader, VertexBuffer* vertexBuffer, u32 count) {
-    renderer->DrawVertexBuffer(renderer->Data, shader->Data, vertexBuffer->Data, count);
+    Renderer* renderer, Shader* shader, VertexBuffer* vertexBuffer, u32 count, Matrix4x4f modelMatrix) {
+    renderer->DrawVertexBuffer(renderer->Data, shader->Data, vertexBuffer->Data, count, modelMatrix);
 }
 
 void Renderer_DrawIndexed(
-    Renderer* renderer, Shader* shader, VertexBuffer* vertexBuffer, IndexBuffer* indexBuffer) {
-    renderer->DrawIndexed(renderer->Data, shader->Data, vertexBuffer->Data, indexBuffer->Data);
+    Renderer* renderer, Shader* shader, VertexBuffer* vertexBuffer, IndexBuffer* indexBuffer, Matrix4x4f modelMatrix) {
+    renderer->DrawIndexed(renderer->Data, shader->Data, vertexBuffer->Data, indexBuffer->Data, modelMatrix);
 }
 
 void Renderer_OnWindowResize(Renderer* renderer, u32 width, u32 height) {

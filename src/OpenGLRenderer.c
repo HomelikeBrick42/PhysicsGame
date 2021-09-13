@@ -115,16 +115,23 @@ void OpenGLRenderer_Clear(OpenGLRenderer* renderer) {
     renderer->glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
 }
 
-void OpenGLRenderer_BeginFrameFunc(OpenGLRenderer* renderer) {
+void OpenGLRenderer_BeginFrameFunc(OpenGLRenderer* renderer, Matrix4x4f viewMatrix, Matrix4x4f projectionMatrix) {
+    renderer->ViewMatrix = viewMatrix;
+    renderer->ProjectionMatrix = projectionMatrix;
 }
 
 void OpenGLRenderer_EndFrameFunc(OpenGLRenderer* renderer) {
+    renderer->ViewMatrix = Matrix4x4_Identity();
+    renderer->ProjectionMatrix = Matrix4x4_Identity();
 }
 
 void OpenGLRenderer_DrawVertexBuffer(
-    OpenGLRenderer* renderer, OpenGLShader* shader, OpenGLVertexBuffer* vertexBuffer, u32 count) {
+    OpenGLRenderer* renderer, OpenGLShader* shader, OpenGLVertexBuffer* vertexBuffer, u32 count, Matrix4x4f modelMatrix) {
     OpenGLRenderer_MakeContextCurrent(renderer);
     OpenGLShader_Bind(shader);
+    renderer->glUniformMatrix4fv(0, 1, GL_FALSE, cast(GLfloat*) renderer->ProjectionMatrix.Data);
+    renderer->glUniformMatrix4fv(1, 1, GL_FALSE, cast(GLfloat*) renderer->ViewMatrix.Data);
+    renderer->glUniformMatrix4fv(2, 1, GL_FALSE, cast(GLfloat*) modelMatrix.Data);
     OpenGLVertexBuffer_Bind(vertexBuffer);
     renderer->glDrawArrays(GL_TRIANGLES, 0, count);
 }
@@ -132,9 +139,13 @@ void OpenGLRenderer_DrawVertexBuffer(
 void OpenGLRenderer_DrawIndexed(OpenGLRenderer* renderer,
                                 OpenGLShader* shader,
                                 OpenGLVertexBuffer* vertexBuffer,
-                                OpenGLIndexBuffer* indexBuffer) {
+                                OpenGLIndexBuffer* indexBuffer,
+                                Matrix4x4f modelMatrix) {
     OpenGLRenderer_MakeContextCurrent(renderer);
     OpenGLShader_Bind(shader);
+    renderer->glUniformMatrix4fv(0, 1, GL_FALSE, cast(GLfloat*) renderer->ProjectionMatrix.Data);
+    renderer->glUniformMatrix4fv(1, 1, GL_FALSE, cast(GLfloat*) renderer->ViewMatrix.Data);
+    renderer->glUniformMatrix4fv(2, 1, GL_FALSE, cast(GLfloat*) modelMatrix.Data);
     OpenGLVertexBuffer_Bind(vertexBuffer);
     OpenGLIndexBuffer_Bind(indexBuffer);
     renderer->glDrawElements(GL_TRIANGLES, OpenGLIndexBuffer_GetCount(indexBuffer), GL_UNSIGNED_INT, nil);

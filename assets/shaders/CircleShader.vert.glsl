@@ -14,5 +14,6 @@ layout(location = 2) uniform mat4 u_ModelMatrix = mat4(1.0);
 void main() {
     v_Color = a_Color;
     v_Coord = a_Coord;
-    gl_Position = u_ProjectionMatrix * u_ViewMatrix * u_ModelMatrix * a_Position;
+    // TODO: Replace put inverse in renderer
+    gl_Position = u_ProjectionMatrix * inverse(u_ViewMatrix) * u_ModelMatrix * a_Position;
 }

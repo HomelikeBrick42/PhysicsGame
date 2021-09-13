@@ -6,6 +6,8 @@
 #include "IndexBuffer.h"
 #include "Clock.h"
 
+#include "Matrix.h"
+
 #include <stdlib.h>
 #include <stdio.h>
 
@@ -17,13 +19,12 @@ typedef struct GameData {
     Shader* CircleShader;
     VertexBuffer* CircleVertexBuffer;
     IndexBuffer* CircleIndexBuffer;
+    Matrix4x4f ProjectionMatrix;
     f32 Delta;
     b8 WPressed;
     b8 APressed;
     b8 SPressed;
     b8 DPressed;
-    b8 EPressed;
-    b8 QPressed;
 } GameData;
 
 static void CloseCallback(Window* window) {
@@ -34,6 +35,8 @@ static void CloseCallback(Window* window) {
 static void ResizeCallback(Window* window, u32 width, u32 height) {
     GameData* data = Window_GetUserData(window);
     Renderer_OnWindowResize(data->Renderer, width, height);
+    f32 aspect = cast(f32) width / cast(f32) height;
+    data->ProjectionMatrix = Matrix4x4f_Orthographic(-aspect, aspect, 1.0f, -1.0f, -1.0f, 1.0f);
 }
 
 static void MousePositionCallback(Window* window, s32 xPos, s32 yPos) {
@@ -73,14 +76,6 @@ static void KeyCallback(Window* window, KeyCode key, b8 pressed) {
             data->DPressed = pressed;
         } break;
 
-        case KeyCode_E: {
-            data->EPressed = pressed;
-        } break;
-
-        case KeyCode_Q: {
-            data->QPressed = pressed;
-        } break;
-
         default: {
         } break;
     }
@@ -89,11 +84,12 @@ static void KeyCallback(Window* window, KeyCode key, b8 pressed) {
 static void DrawCallback(Window* window) {
     GameData* data = Window_GetUserData(window);
 
-    Renderer_BeginFrame(data->Renderer);
+    Renderer_BeginFrame(data->Renderer, Matrix4x4_Identity(), data->ProjectionMatrix);
 
     Renderer_Clear(data->Renderer);
 
-    Renderer_DrawIndexed(data->Renderer, data->CircleShader, data->CircleVertexBuffer, data->CircleIndexBuffer);
+    Renderer_DrawIndexed(
+        data->Renderer, data->CircleShader, data->CircleVertexBuffer, data->CircleIndexBuffer, Matrix4x4_Identity());
 
     Renderer_EndFrame(data->Renderer);
     Renderer_Present(data->Renderer);

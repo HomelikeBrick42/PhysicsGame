@@ -1,6 +1,8 @@
 #pragma once
 
 #include "Defines.h"
+#include "Vector.h"
+
 #include <math.h>
 
 typedef struct Matrix4x4f {
@@ -9,10 +11,12 @@ typedef struct Matrix4x4f {
 
 INLINE Matrix4x4f Matrix4x4_Identity() {
     Matrix4x4f result = {};
+
     result.Data[0][0] = 1.0f;
     result.Data[1][1] = 1.0f;
     result.Data[2][2] = 1.0f;
     result.Data[3][3] = 1.0f;
+
     return result;
 }
 
@@ -31,11 +35,11 @@ INLINE Matrix4x4f Matrix4x4f_Orthographic(f32 left, f32 right, f32 top, f32 bott
     return result;
 }
 
-INLINE Matrix4x4f Matrix4x4f_Translation(f32 x, f32 y) {
+INLINE Matrix4x4f Matrix4x4f_Translation(Vector2f position) {
     Matrix4x4f result = Matrix4x4_Identity();
 
-    result.Data[3][0] = x;
-    result.Data[3][1] = y;
+    result.Data[3][0] = position.x;
+    result.Data[3][1] = position.y;
 
     return result;
 }
@@ -54,11 +58,11 @@ INLINE Matrix4x4f Matrix4x4f_Rotate(f32 radians) {
     return result;
 }
 
-INLINE Matrix4x4f Matrix4x4f_Scale(f32 x, f32 y) {
+INLINE Matrix4x4f Matrix4x4f_Scale(Vector2f scale) {
     Matrix4x4f result = Matrix4x4_Identity();
 
-    result.Data[0][0] = x;
-    result.Data[1][1] = y;
+    result.Data[0][0] = scale.x;
+    result.Data[1][1] = scale.y;
 
     return result;
 }

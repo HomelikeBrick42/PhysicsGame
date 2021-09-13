@@ -22,7 +22,7 @@ typedef struct GameData {
     VertexBuffer* SquareVertexBuffer;
     IndexBuffer* SquareIndexBuffer;
     Matrix4x4f ProjectionMatrix;
-    f32 CameraX, CameraY;
+    Vector2f CameraPosition;
     f32 CameraScale;
     f32 Delta;
     b8 WPressed, APressed, SPressed, DPressed;
@@ -104,15 +104,16 @@ static void KeyCallback(Window* window, KeyCode key, b8 pressed) {
 static void DrawCallback(Window* window) {
     GameData* data = Window_GetUserData(window);
 
-    Renderer_BeginFrame(data->Renderer, Matrix4x4f_Translation(data->CameraX, data->CameraY), data->ProjectionMatrix);
+    Renderer_BeginFrame(data->Renderer, Matrix4x4f_Translation(data->CameraPosition), data->ProjectionMatrix);
 
     Renderer_Clear(data->Renderer);
 
-    Matrix4x4f circleMatrix = Matrix4x4f_Translation(-1.0f, 0.0f);
+    Matrix4x4f circleMatrix = Matrix4x4f_Translation((Vector2f){ .x = -1.0f, .y = 0.0f });
 
     static f32 rotation = 0.0f;
     rotation += data->Delta * 1.5f; // I know that this is bad to update in draw function
-    Matrix4x4f squareMatrix = Matrix4x4f_Multiply(Matrix4x4f_Rotate(rotation), Matrix4x4f_Translation(1.0f, 0.0f));
+    Matrix4x4f squareMatrix =
+        Matrix4x4f_Multiply(Matrix4x4f_Rotate(rotation), Matrix4x4f_Translation((Vector2f){ .x = 1.0f, .y = 0.0f }));
 
     Renderer_DrawIndexed(data->Renderer, data->CircleShader, data->CircleVertexBuffer, data->CircleIndexBuffer, circleMatrix);
     Renderer_DrawIndexed(data->Renderer, data->ColorShader, data->SquareVertexBuffer, data->SquareIndexBuffer, squareMatrix);
@@ -168,22 +169,18 @@ int main() {
 
     {
         typedef struct CircleShaderVertex {
-            struct {
-                f32 x, y;
-            } Position;
+            Vector2f Position;
             struct {
                 u8 r, g, b, a;
             } Color;
-            struct {
-                f32 x, y;
-            } Coord;
+            Vector2f Coord;
         } CircleShaderVertex;
 
         CircleShaderVertex vertices[] = {
-            { { -0.5f, +0.5f }, { 150, 0, 0, 255 }, { -1.0f, +1.0f } },
-            { { +0.5f, +0.5f }, { 150, 0, 0, 255 }, { +1.0f, +1.0f } },
-            { { +0.5f, -0.5f }, { 150, 0, 0, 255 }, { +1.0f, -1.0f } },
-            { { -0.5f, -0.5f }, { 150, 0, 0, 255 }, { -1.0f, -1.0f } },
+            { { .x = -0.5f, .y = +0.5f }, { .r = 150, .g = 0, .b = 0, .a = 255 }, { .x = -1.0f, .y = +1.0f } },
+            { { .x = +0.5f, .y = +0.5f }, { .r = 150, .g = 0, .b = 0, .a = 255 }, { .x = +1.0f, .y = +1.0f } },
+            { { .x = +0.5f, .y = -0.5f }, { .r = 150, .g = 0, .b = 0, .a = 255 }, { .x = +1.0f, .y = -1.0f } },
+            { { .x = -0.5f, .y = -0.5f }, { .r = 150, .g = 0, .b = 0, .a = 255 }, { .x = -1.0f, .y = -1.0f } },
         };
 
         u32 indices[] = {
@@ -227,19 +224,17 @@ int main() {
 
     {
         typedef struct ColorShaderVertex {
-            struct {
-                f32 x, y;
-            } Position;
+            Vector2f Position;
             struct {
                 u8 r, g, b, a;
             } Color;
         } ColorShaderVertex;
 
         ColorShaderVertex vertices[] = {
-            { { -0.5f, +0.5f }, { 0, 150, 0, 255 } },
-            { { +0.5f, +0.5f }, { 0, 150, 0, 255 } },
-            { { +0.5f, -0.5f }, { 0, 150, 0, 255 } },
-            { { -0.5f, -0.5f }, { 0, 150, 0, 255 } },
+            { { .x = -0.5f, .y = +0.5f }, { .r = 0, .g = 150, .b = 0, .a = 255 } },
+            { { .x = +0.5f, .y = +0.5f }, { .r = 0, .g = 150, .b = 0, .a = 255 } },
+            { { .x = +0.5f, .y = -0.5f }, { .r = 0, .g = 150, .b = 0, .a = 255 } },
+            { { .x = -0.5f, .y = -0.5f }, { .r = 0, .g = 150, .b = 0, .a = 255 } },
         };
 
         u32 indices[] = {
@@ -301,19 +296,19 @@ int main() {
         lastTime   = time;
 
         if (data.WPressed) {
-            data.CameraY += data.Delta / data.CameraScale;
+            data.CameraPosition.y += data.Delta / data.CameraScale;
         }
 
         if (data.SPressed) {
-            data.CameraY -= data.Delta / data.CameraScale;
+            data.CameraPosition.y -= data.Delta / data.CameraScale;
         }
 
         if (data.APressed) {
-            data.CameraX -= data.Delta / data.CameraScale;
+            data.CameraPosition.x -= data.Delta / data.CameraScale;
         }
 
         if (data.DPressed) {
-            data.CameraX += data.Delta / data.CameraScale;
+            data.CameraPosition.x += data.Delta / data.CameraScale;
         }
 
         Window_InvalidatePixels(data.Window);

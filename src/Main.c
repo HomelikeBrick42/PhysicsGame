@@ -116,9 +116,11 @@ static void DrawCallback(Window* window) {
 
     Matrix4x4f circleMatrix = Matrix4x4f_Translation(circlePosition);
 
-    Vector2f direction      = { .x = circlePosition.x - squarePosition.x, .y = circlePosition.y - squarePosition.y };
-    f32 rotation            = atan2f(direction.x, direction.y);
-    Matrix4x4f squareMatrix = Matrix4x4f_Multiply(Matrix4x4f_Scale((Vector2f){ .x = 2.0f, .y = 1.0f }), Matrix4x4f_Multiply(Matrix4x4f_Rotate(rotation), Matrix4x4f_Translation(squarePosition)));
+    Vector2f direction = { .x = circlePosition.x - squarePosition.x, .y = circlePosition.y - squarePosition.y };
+    f32 rotation       = atan2f(direction.x, direction.y);
+    Matrix4x4f squareMatrix =
+        Matrix4x4f_Multiply(Matrix4x4f_Scale((Vector2f){ .x = 2.0f, .y = 1.0f }),
+                            Matrix4x4f_Multiply(Matrix4x4f_Rotate(rotation), Matrix4x4f_Translation(squarePosition)));
 
     Renderer_DrawIndexed(data->Renderer, data->CircleShader, data->CircleVertexBuffer, data->CircleIndexBuffer, circleMatrix);
     Renderer_DrawIndexed(data->Renderer, data->ColorShader, data->SquareVertexBuffer, data->SquareIndexBuffer, squareMatrix);

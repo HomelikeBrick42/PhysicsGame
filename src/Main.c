@@ -296,19 +296,19 @@ int main() {
         lastTime   = time;
 
         if (data.WPressed) {
-            data.CameraPosition.y += data.Delta / data.CameraScale;
+            data.CameraPosition.y += data.Delta / data.CameraScale * 2.0f;
         }
 
         if (data.SPressed) {
-            data.CameraPosition.y -= data.Delta / data.CameraScale;
+            data.CameraPosition.y -= data.Delta / data.CameraScale * 2.0f;
         }
 
         if (data.APressed) {
-            data.CameraPosition.x -= data.Delta / data.CameraScale;
+            data.CameraPosition.x -= data.Delta / data.CameraScale * 3.0f;
         }
 
         if (data.DPressed) {
-            data.CameraPosition.x += data.Delta / data.CameraScale;
+            data.CameraPosition.x += data.Delta / data.CameraScale * 3.0f;
         }
 
         Window_InvalidatePixels(data.Window);

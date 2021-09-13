@@ -52,6 +52,7 @@ typedef void Window_CloseCallbackFunc(Window* window);
 typedef void Window_ResizeCallbackFunc(Window* window, u32 width, u32 height);
 typedef void Window_MousePositionCallbackFunc(Window* window, s32 xPos, s32 yPos);
 typedef void Window_MouseMoveCallbackFunc(Window* window, s32 xDelta, s32 yDelta);
+typedef void Window_MouseScrollCallbackFunc(Window* window, s32 xDelta, s32 yDelta);
 typedef void Window_KeyCallbackFunc(Window* window, KeyCode key, b8 pressed);
 typedef void Window_DrawCallbackFunc(Window* window);
 
@@ -69,11 +70,13 @@ void Window_SetCloseCallback(Window* window, Window_CloseCallbackFunc* callback)
 void Window_SetResizeCallback(Window* window, Window_ResizeCallbackFunc* callback);
 void Window_SetMousePositionCallback(Window* window, Window_MousePositionCallbackFunc* callback);
 void Window_SetMouseMoveCallback(Window* window, Window_MouseMoveCallbackFunc* callback);
+void Window_SetMouseScrollCallback(Window* window, Window_MouseScrollCallbackFunc* callback);
 void Window_SetKeyCallback(Window* window, Window_KeyCallbackFunc* callback);
 void Window_SetDrawCallback(Window* window, Window_DrawCallbackFunc* callback);
 void Window_SetUserData(Window* window, void* userData);
 
 void* Window_GetUserData(Window* window);
+void Window_GetSize(Window* window, u32* width, u32* height);
 b8 Window_IsMouseDisabled(Window* window);
 
 #if defined(WINDOW_PRIVATE)
@@ -91,9 +94,12 @@ typedef struct Window {
     Window_ResizeCallbackFunc* ResizeCallback;
     Window_MousePositionCallbackFunc* MousePositionCallback;
     Window_MouseMoveCallbackFunc* MouseMoveCallback;
+    Window_MouseScrollCallbackFunc* MouseScrollCallback;
     Window_KeyCallbackFunc* KeyCallback;
     Window_DrawCallbackFunc* DrawCallback;
     b8 MouseDisabled;
+    u32 Width;
+    u32 Height;
     void* UserData;
 } Window;
 #endif

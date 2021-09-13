@@ -1,6 +1,7 @@
 #pragma once
 
 #include "Defines.h"
+#include <math.h>
 
 typedef struct Matrix4x4f {
     f32 Data[4][4];
@@ -26,6 +27,54 @@ INLINE Matrix4x4f Matrix4x4f_Orthographic(f32 left, f32 right, f32 top, f32 bott
     result.Data[3][0] = -(right + left) / (right - left);
     result.Data[3][1] = -(top + bottom) / (top - bottom);
     result.Data[3][2] = -(farClip + nearClip) / (farClip - nearClip);
+
+    return result;
+}
+
+INLINE Matrix4x4f Matrix4x4f_Translation(f32 x, f32 y) {
+    Matrix4x4f result = Matrix4x4_Identity();
+
+    result.Data[3][0] = x;
+    result.Data[3][1] = y;
+
+    return result;
+}
+
+INLINE Matrix4x4f Matrix4x4f_Rotate(f32 degrees) {
+    Matrix4x4f result = Matrix4x4_Identity();
+
+    f32 c = cosf(degrees * cast(f32) (M_PI / 180.0));
+    f32 s = sinf(degrees * cast(f32) (M_PI / 180.0));
+
+    result.Data[0][0] = c;
+    result.Data[0][1] = -s;
+    result.Data[1][0] = s;
+    result.Data[1][1] = c;
+
+    return result;
+}
+
+INLINE Matrix4x4f Matrix4x4f_Scale(f32 x, f32 y) {
+    Matrix4x4f result = Matrix4x4_Identity();
+
+    result.Data[0][0] = x;
+    result.Data[1][1] = y;
+
+    return result;
+}
+
+INLINE Matrix4x4f Matrix4x4f_Multiply(Matrix4x4f a, Matrix4x4f b) {
+    Matrix4x4f result;
+
+    for (u64 i = 0; i < 4; i++) {
+        for (u64 j = 0; j < 4; j++) {
+            f32 sum = 0.0f;
+            for (u64 k = 0; k < 4; k++) {
+                sum += a.Data[i][k] * b.Data[k][j];
+            }
+            result.Data[i][j] = sum;
+        }
+    }
 
     return result;
 }

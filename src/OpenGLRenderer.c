@@ -78,8 +78,8 @@ OpenGLRenderer* OpenGLRenderer_Create(Window* window) {
     #undef OPENGL_FUNCTION
 #endif
 
-    renderer->glEnable(GL_DEPTH_TEST);
-    renderer->glDepthRange(0.0f, 1.0f);
+    // renderer->glEnable(GL_DEPTH_TEST);
+    // renderer->glDepthRange(0.0f, 1.0f);
 
     renderer->glEnable(GL_BLEND);
     renderer->glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);

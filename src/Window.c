@@ -33,12 +33,14 @@ static LRESULT CALLBACK WindowCallback(HWND windowHandle, UINT message, WPARAM w
             } break;
 
             case WM_SIZE: {
-                if (window->ResizeCallback != nil) {
-                    RECT windowRect;
-                    if (GetClientRect(window->Handle, &windowRect)) {
-                        int width  = windowRect.right - windowRect.left;
-                        int height = windowRect.bottom - windowRect.top;
-                        if (width > 0 && height > 0) {
+                RECT windowRect;
+                if (GetClientRect(window->Handle, &windowRect)) {
+                    int width  = windowRect.right - windowRect.left;
+                    int height = windowRect.bottom - windowRect.top;
+                    if (width > 0 && height > 0) {
+                        window->Width  = width;
+                        window->Height = height;
+                        if (window->ResizeCallback != nil) {
                             window->ResizeCallback(window, cast(u32) width, cast(u32) height);
                         }
                     }
@@ -57,6 +59,16 @@ static LRESULT CALLBACK WindowCallback(HWND windowHandle, UINT message, WPARAM w
             case WM_MOVE: {
                 if (window->MouseDisabled) {
                     Window_DisableMouse(window);
+                }
+            } break;
+
+            case WM_MOUSEWHEEL: {
+                if (window->MouseScrollCallback != nil) {
+                    s32 xDelta = GET_X_LPARAM(wParam);
+                    xDelta     = xDelta == 0 ? 0 : xDelta < 0 ? -1 : 1;
+                    s32 yDelta = GET_Y_LPARAM(wParam);
+                    yDelta     = yDelta == 0 ? 0 : yDelta < 0 ? -1 : 1;
+                    window->MouseScrollCallback(window, xDelta, yDelta);
                 }
             } break;
 
@@ -290,8 +302,6 @@ void Window_PollEvents(Window* window) {
         TranslateMessage(&message);
         DispatchMessageA(&message);
     }
-
-    Sleep(10);
 }
 
 void Window_InvalidatePixels(Window* window) {
@@ -326,6 +336,10 @@ void Window_SetMouseMoveCallback(Window* window, Window_MouseMoveCallbackFunc* c
     window->MouseMoveCallback = callback;
 }
 
+void Window_SetMouseScrollCallback(Window* window, Window_MouseScrollCallbackFunc* callback) {
+    window->MouseScrollCallback = callback;
+}
+
 void Window_SetKeyCallback(Window* window, Window_KeyCallbackFunc* callback) {
     window->KeyCallback = callback;
 }
@@ -336,6 +350,15 @@ void Window_SetDrawCallback(Window* window, Window_DrawCallbackFunc* callback) {
 
 void* Window_GetUserData(Window* window) {
     return window->UserData;
+}
+
+void Window_GetSize(Window* window, u32* width, u32* height) {
+    if (width != nil) {
+        *width = window->Width;
+    }
+    if (height != nil) {
+        *height = window->Height;
+    }
 }
 
 b8 Window_IsMouseDisabled(Window* window) {

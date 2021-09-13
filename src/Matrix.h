@@ -40,11 +40,11 @@ INLINE Matrix4x4f Matrix4x4f_Translation(f32 x, f32 y) {
     return result;
 }
 
-INLINE Matrix4x4f Matrix4x4f_Rotate(f32 degrees) {
+INLINE Matrix4x4f Matrix4x4f_Rotate(f32 radians) {
     Matrix4x4f result = Matrix4x4_Identity();
 
-    f32 c = cosf(degrees * cast(f32) (M_PI / 180.0));
-    f32 s = sinf(degrees * cast(f32) (M_PI / 180.0));
+    f32 c = cosf(radians);
+    f32 s = sinf(radians);
 
     result.Data[0][0] = c;
     result.Data[0][1] = -s;

@@ -111,8 +111,8 @@ static void DrawCallback(Window* window) {
     Matrix4x4f circleMatrix = Matrix4x4f_Translation(-1.0f, 0.0f);
 
     static f32 rotation = 0.0f;
+    rotation += data->Delta * 1.5f; // I know that this is bad to update in draw function
     Matrix4x4f squareMatrix = Matrix4x4f_Multiply(Matrix4x4f_Rotate(rotation), Matrix4x4f_Translation(1.0f, 0.0f));
-    rotation += data->Delta * 90.0f;
 
     Renderer_DrawIndexed(data->Renderer, data->CircleShader, data->CircleVertexBuffer, data->CircleIndexBuffer, circleMatrix);
     Renderer_DrawIndexed(data->Renderer, data->ColorShader, data->SquareVertexBuffer, data->SquareIndexBuffer, squareMatrix);

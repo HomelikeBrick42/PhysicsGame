@@ -16,6 +16,8 @@ include_directories(src)
 
 add_executable(
         Game
+        src/Array.c
+        src/Array.h
         src/Clock.c
         src/Clock.h
         src/Defines.h

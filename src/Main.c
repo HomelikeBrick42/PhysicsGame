@@ -5,11 +5,13 @@
 #include "VertexBuffer.h"
 #include "IndexBuffer.h"
 #include "Clock.h"
+#include "Array.h"
 
 #include "Matrix.h"
 
 #include <stdlib.h>
 #include <stdio.h>
+#include <inttypes.h>
 
 typedef struct GameData {
     b8 Running;

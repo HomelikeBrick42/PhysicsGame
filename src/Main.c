@@ -11,7 +11,21 @@
 
 #include <stdlib.h>
 #include <stdio.h>
-#include <inttypes.h>
+
+typedef struct Point {
+    Vector2f Position;
+    Vector2f LastPosition;
+    f32 Radius;
+    f32 Mass;
+    b8 Fixed;
+} Point;
+
+typedef struct Stick {
+    Point* A;
+    Point* B;
+    f32 Length;
+    f32 Springiness;
+} Stick;
 
 typedef struct GameData {
     b8 Running;
@@ -28,6 +42,8 @@ typedef struct GameData {
     f32 CameraScale;
     f32 Delta;
     b8 WPressed, APressed, SPressed, DPressed;
+    Array(Point*) Points; // These are pointers because stick keeps a pointer to the points
+    Array(Stick*) Sticks;
 } GameData;
 
 static void CloseCallback(Window* window) {
@@ -110,33 +126,109 @@ static void DrawCallback(Window* window) {
 
     Renderer_Clear(data->Renderer);
 
-    static f32 counter = 0.0f;
-    counter += data->Delta; // I know that this is bad to update in draw function
+    for (u64 i = 0; i < Array_GetLength(data->Sticks); i++) {
+        Stick* stick = data->Sticks[i];
 
-    Vector2f circle1Position = { .x = -1.0f, .y = sinf(counter * 2.0f) * 6.0f };
-    Vector2f squarePosition = { .x = 1.0f, .y = -4.0f };
+        Vector2f direction = Vector2f_Sub(stick->B->Position, stick->A->Position);
+        f32 rotation       = atan2f(direction.x, direction.y);
+        f32 distance       = Vector2f_Length(direction);
+        Matrix4x4f matrix =
+            Matrix4x4f_Multiply(Matrix4x4f_Scale((Vector2f){ .x = 0.5f, .y = distance }),
+                                Matrix4x4f_Multiply(Matrix4x4f_Rotate(rotation), Matrix4x4f_Translation(stick->A->Position)));
 
-    Matrix4x4f circle1Matrix = Matrix4x4f_Translation(circle1Position);
-    Matrix4x4f circle2Matrix = Matrix4x4f_Translation(squarePosition);
+        Renderer_DrawIndexed(data->Renderer, data->ColorShader, data->SquareVertexBuffer, data->SquareIndexBuffer, matrix);
+    }
 
-    Vector2f direction = { .x = circle1Position.x - squarePosition.x, .y = circle1Position.y - squarePosition.y };
-    f32 rotation       = atan2f(direction.x, direction.y);
-    f32 distance       = sqrtf(direction.x * direction.x + direction.y * direction.y);
-    Matrix4x4f squareMatrix =
-        Matrix4x4f_Multiply(Matrix4x4f_Scale((Vector2f){ .x = 0.5f, .y = distance }),
-                            Matrix4x4f_Multiply(Matrix4x4f_Rotate(rotation), Matrix4x4f_Translation(squarePosition)));
+    for (u64 i = 0; i < Array_GetLength(data->Points); i++) {
+        Point* point = data->Points[i];
 
-    Renderer_DrawIndexed(data->Renderer, data->ColorShader, data->SquareVertexBuffer, data->SquareIndexBuffer, squareMatrix);
-    Renderer_DrawIndexed(data->Renderer, data->CircleShader, data->CircleVertexBuffer, data->CircleIndexBuffer, circle1Matrix);
-    Renderer_DrawIndexed(data->Renderer, data->CircleShader, data->CircleVertexBuffer, data->CircleIndexBuffer, circle2Matrix);
+        Matrix4x4f matrix = Matrix4x4f_Multiply(Matrix4x4f_Scale((Vector2f){ .x = point->Radius, .y = point->Radius }),
+                                                Matrix4x4f_Translation(point->Position));
+
+        Renderer_DrawIndexed(data->Renderer, data->CircleShader, data->CircleVertexBuffer, data->CircleIndexBuffer, matrix);
+    }
 
     Renderer_EndFrame(data->Renderer);
     Renderer_Present(data->Renderer);
 }
 
+static void Update(GameData* data, f32 dt) {
+    // Camera
+    {
+        if (data->WPressed) {
+            data->CameraPosition.y += dt / data->CameraScale * 2.0f;
+        }
+
+        if (data->SPressed) {
+            data->CameraPosition.y -= dt / data->CameraScale * 2.0f;
+        }
+
+        if (data->APressed) {
+            data->CameraPosition.x -= dt / data->CameraScale * 3.0f;
+        }
+
+        if (data->DPressed) {
+            data->CameraPosition.x += dt / data->CameraScale * 3.0f;
+        }
+    }
+}
+
+static void FixedUpdate(GameData* data, f32 dt) {
+    // Points
+    {
+        for (u64 i = 0; i < Array_GetLength(data->Points); i++) {
+            Point* point = data->Points[i];
+
+            if (point->Fixed) {
+                continue;
+            }
+
+            Vector2f velocity   = Vector2f_Sub(point->Position, point->LastPosition);
+            point->LastPosition = point->Position;
+            point->Position     = Vector2f_Add(point->Position, velocity);
+        }
+    }
+
+    // Sticks
+    {
+        for (u64 i = 0; i < Array_GetLength(data->Sticks); i++) {
+            Stick* stick = data->Sticks[i];
+
+            if (stick->A->Fixed && stick->B->Fixed) {
+                continue;
+            }
+
+            Vector2f direction = Vector2f_Sub(stick->B->Position, stick->A->Position);
+            f32 distance       = Vector2f_Length(direction);
+            f32 difference     = stick->Length - distance;
+
+            if (!stick->A->Fixed && !stick->B->Fixed) {
+                f32 percent     = difference / distance * 0.5f;
+                Vector2f offset = Vector2f_Mul(direction, (Vector2f){ .x = percent, .y = percent });
+
+                stick->A->Position = Vector2f_Sub(stick->A->Position, offset);
+                stick->B->Position = Vector2f_Add(stick->B->Position, offset);
+            } else if (stick->A->Fixed) {
+                f32 percent     = difference / distance;
+                Vector2f offset = Vector2f_Mul(direction, (Vector2f){ .x = percent, .y = percent });
+
+                stick->B->Position = Vector2f_Add(stick->B->Position, offset);
+            } else if (stick->B->Fixed) {
+                f32 percent     = difference / distance;
+                Vector2f offset = Vector2f_Mul(direction, (Vector2f){ .x = percent, .y = percent });
+
+                stick->A->Position = Vector2f_Sub(stick->A->Position, offset);
+            }
+        }
+    }
+}
+
 int main() {
     GameData data = {};
     data.Running  = TRUE;
+
+    data.Points = Array_Create(Point*);
+    data.Sticks = Array_Create(Stick*);
 
     data.Window = Window_Create(640, 480);
     if (data.Window == nil) {
@@ -288,6 +380,35 @@ int main() {
 
     data.CameraScale = 1.0f;
 
+    {
+        Point* point        = calloc(1, sizeof(Point));
+        point->Position.x   = -3.0f;
+        point->LastPosition = point->Position;
+        point->Radius = 1.0f;
+        point->Mass   = 1.0f;
+        point->Fixed = TRUE;
+        Array_Push(data.Points, point);
+    }
+
+    {
+        Point* point        = calloc(1, sizeof(Point));
+        point->Position.x   = 3.0f;
+        point->LastPosition = point->Position;
+        point->LastPosition.x -= 0.1f;
+        point->LastPosition.y -= 0.1f;
+        point->Radius = 1.0f;
+        point->Mass   = 1.0f;
+        Array_Push(data.Points, point);
+    }
+
+    {
+        Stick* stick  = calloc(1, sizeof(Stick));
+        stick->A      = data.Points[0];
+        stick->B      = data.Points[1];
+        stick->Length = 6.0f;
+        Array_Push(data.Sticks, stick);
+    }
+
     Window_Show(data.Window);
 
     Clock* clock = Clock_Create();
@@ -300,27 +421,21 @@ int main() {
     Clock_Start(clock);
 
     f64 time;
-    f64 lastTime = Clock_GetTime(clock);
+    f64 lastTime                  = Clock_GetTime(clock);
+    f32 fixedUpdateTime           = 0.0f;
+    const f32 FixedUpdateInterval = 1.0f / 60.0f;
     while (data.Running) {
         Clock_Update(clock);
         time       = Clock_GetTime(clock);
         data.Delta = cast(f32)(time - lastTime);
         lastTime   = time;
 
-        if (data.WPressed) {
-            data.CameraPosition.y += data.Delta / data.CameraScale * 2.0f;
-        }
+        Update(&data, data.Delta);
 
-        if (data.SPressed) {
-            data.CameraPosition.y -= data.Delta / data.CameraScale * 2.0f;
-        }
-
-        if (data.APressed) {
-            data.CameraPosition.x -= data.Delta / data.CameraScale * 3.0f;
-        }
-
-        if (data.DPressed) {
-            data.CameraPosition.x += data.Delta / data.CameraScale * 3.0f;
+        fixedUpdateTime += data.Delta;
+        while (fixedUpdateTime - FixedUpdateInterval > 0.0f) {
+            FixedUpdate(&data, FixedUpdateInterval);
+            fixedUpdateTime -= FixedUpdateInterval;
         }
 
         Window_InvalidatePixels(data.Window);
@@ -334,6 +449,22 @@ int main() {
     }
 
     Window_Hide(data.Window);
+
+    for (u64 i = 0; i < Array_GetLength(data.Sticks); i++) {
+        free(data.Sticks[i]);
+    }
+    Array_Destroy(data.Sticks);
+
+    for (u64 i = 0; i < Array_GetLength(data.Points); i++) {
+        free(data.Points[i]);
+    }
+    Array_Destroy(data.Points);
+
+    VertexBuffer_Destroy(data.SquareVertexBuffer);
+    IndexBuffer_Destroy(data.SquareIndexBuffer);
+
+    VertexBuffer_Destroy(data.CircleVertexBuffer);
+    IndexBuffer_Destroy(data.CircleIndexBuffer);
 
     Shader_Destroy(data.CircleShader);
     Shader_Destroy(data.ColorShader);

@@ -129,6 +129,7 @@ void OpenGLRenderer_DrawVertexBuffer(
     OpenGLRenderer* renderer, OpenGLShader* shader, OpenGLVertexBuffer* vertexBuffer, u32 count, Matrix4x4f modelMatrix) {
     OpenGLRenderer_MakeContextCurrent(renderer);
     OpenGLShader_Bind(shader);
+    // TODO: Detect if the same shader is being bound and not setting the uniforms
     renderer->glUniformMatrix4fv(0, 1, GL_FALSE, cast(GLfloat*) renderer->ProjectionMatrix.Data);
     renderer->glUniformMatrix4fv(1, 1, GL_FALSE, cast(GLfloat*) renderer->ViewMatrix.Data);
     renderer->glUniformMatrix4fv(2, 1, GL_FALSE, cast(GLfloat*) modelMatrix.Data);
@@ -143,6 +144,7 @@ void OpenGLRenderer_DrawIndexed(OpenGLRenderer* renderer,
                                 Matrix4x4f modelMatrix) {
     OpenGLRenderer_MakeContextCurrent(renderer);
     OpenGLShader_Bind(shader);
+    // TODO: Detect if the same shader is being bound and not setting the uniforms
     renderer->glUniformMatrix4fv(0, 1, GL_FALSE, cast(GLfloat*) renderer->ProjectionMatrix.Data);
     renderer->glUniformMatrix4fv(1, 1, GL_FALSE, cast(GLfloat*) renderer->ViewMatrix.Data);
     renderer->glUniformMatrix4fv(2, 1, GL_FALSE, cast(GLfloat*) modelMatrix.Data);

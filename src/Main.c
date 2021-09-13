@@ -111,19 +111,22 @@ static void DrawCallback(Window* window) {
     static f32 counter = 0.0f;
     counter += data->Delta; // I know that this is bad to update in draw function
 
-    Vector2f circlePosition = { .x = -1.0f, .y = sinf(counter * 2.0f) * 3.0f };
+    Vector2f circle1Position = { .x = -1.0f, .y = sinf(counter * 2.0f) * 6.0f };
     Vector2f squarePosition = { .x = 1.0f, .y = -4.0f };
 
-    Matrix4x4f circleMatrix = Matrix4x4f_Translation(circlePosition);
+    Matrix4x4f circle1Matrix = Matrix4x4f_Translation(circle1Position);
+    Matrix4x4f circle2Matrix = Matrix4x4f_Translation(squarePosition);
 
-    Vector2f direction = { .x = circlePosition.x - squarePosition.x, .y = circlePosition.y - squarePosition.y };
+    Vector2f direction = { .x = circle1Position.x - squarePosition.x, .y = circle1Position.y - squarePosition.y };
     f32 rotation       = atan2f(direction.x, direction.y);
+    f32 distance       = sqrtf(direction.x * direction.x + direction.y * direction.y);
     Matrix4x4f squareMatrix =
-        Matrix4x4f_Multiply(Matrix4x4f_Scale((Vector2f){ .x = 2.0f, .y = 1.0f }),
+        Matrix4x4f_Multiply(Matrix4x4f_Scale((Vector2f){ .x = 0.5f, .y = distance }),
                             Matrix4x4f_Multiply(Matrix4x4f_Rotate(rotation), Matrix4x4f_Translation(squarePosition)));
 
-    Renderer_DrawIndexed(data->Renderer, data->CircleShader, data->CircleVertexBuffer, data->CircleIndexBuffer, circleMatrix);
     Renderer_DrawIndexed(data->Renderer, data->ColorShader, data->SquareVertexBuffer, data->SquareIndexBuffer, squareMatrix);
+    Renderer_DrawIndexed(data->Renderer, data->CircleShader, data->CircleVertexBuffer, data->CircleIndexBuffer, circle1Matrix);
+    Renderer_DrawIndexed(data->Renderer, data->CircleShader, data->CircleVertexBuffer, data->CircleIndexBuffer, circle2Matrix);
 
     Renderer_EndFrame(data->Renderer);
     Renderer_Present(data->Renderer);
@@ -238,10 +241,10 @@ int main() {
         } ColorShaderVertex;
 
         ColorShaderVertex vertices[] = {
-            { { .x = -0.5f, .y = +0.5f }, { .r = 0, .g = 150, .b = 0, .a = 255 } },
-            { { .x = +0.5f, .y = +0.5f }, { .r = 0, .g = 150, .b = 0, .a = 255 } },
-            { { .x = +0.5f, .y = -0.5f }, { .r = 0, .g = 150, .b = 0, .a = 255 } },
-            { { .x = -0.5f, .y = -0.5f }, { .r = 0, .g = 150, .b = 0, .a = 255 } },
+            { { .x = -0.5f, .y = +1.0f }, { .r = 0, .g = 150, .b = 0, .a = 255 } },
+            { { .x = +0.5f, .y = +1.0f }, { .r = 0, .g = 150, .b = 0, .a = 255 } },
+            { { .x = +0.5f, .y = -0.0f }, { .r = 0, .g = 150, .b = 0, .a = 255 } },
+            { { .x = -0.5f, .y = -0.0f }, { .r = 0, .g = 150, .b = 0, .a = 255 } },
         };
 
         u32 indices[] = {

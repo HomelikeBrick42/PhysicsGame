@@ -6,7 +6,7 @@ typedef struct Renderer Renderer;
 
 typedef struct Shader Shader;
 
-Shader* Shader_Create(Renderer* renderer, const char* vertexShaderSource, const char* fragmentShaderSource);
+Shader* Shader_Create(Renderer* renderer, const char* vertexShaderPath, const char* fragmentShaderPath);
 void Shader_Destroy(Shader* shader);
 
 #if defined(SHADER_PRIVATE)

@@ -13,9 +13,10 @@ typedef struct GameData {
     b8 Running;
     Window* Window;
     Renderer* Renderer;
-    Shader* VertexColorShader;
-    VertexBuffer* TriangleVertexBuffer;
-    IndexBuffer* TriangleIndexBuffer;
+    Shader* ColorShader;
+    Shader* CircleShader;
+    VertexBuffer* CircleVertexBuffer;
+    IndexBuffer* CircleIndexBuffer;
     f32 Delta;
     b8 WPressed;
     b8 APressed;
@@ -92,40 +93,11 @@ static void DrawCallback(Window* window) {
 
     Renderer_Clear(data->Renderer);
 
-    Renderer_DrawIndexed(
-        data->Renderer, data->VertexColorShader, data->TriangleVertexBuffer, data->TriangleIndexBuffer);
+    Renderer_DrawIndexed(data->Renderer, data->CircleShader, data->CircleVertexBuffer, data->CircleIndexBuffer);
 
     Renderer_EndFrame(data->Renderer);
     Renderer_Present(data->Renderer);
 }
-
-static const char* ColorVertexShaderSource = "#version 440 core\n"
-                                             "\n"
-                                             "layout(location = 0) in vec4 a_Position;\n"
-                                             "layout(location = 1) in vec4 a_Color;\n"
-                                             "\n"
-                                             "layout(location = 0) out vec4 v_Color;\n"
-                                             "\n"
-                                             "layout(location = 0) uniform mat4 u_ProjectionMatrix = mat4(1.0);\n"
-                                             "layout(location = 1) uniform mat4 u_ViewMatrix = mat4(1.0);\n"
-                                             "layout(location = 2) uniform mat4 u_ModelMatrix = mat4(1.0);\n"
-                                             "\n"
-                                             "void main() {\n"
-                                             "   v_Color = a_Color;"
-                                             "   gl_Position = u_ProjectionMatrix * u_ViewMatrix * u_ModelMatrix * a_Position;\n"
-                                             "}\n"
-                                             "\n";
-
-static const char* ColorFragmentShaderSource = "#version 440 core\n"
-                                               "\n"
-                                               "layout(location = 0) out vec4 a_Color;\n"
-                                               "\n"
-                                               "layout(location = 0) in vec4 v_Color;\n"
-                                               "\n"
-                                               "void main() {\n"
-                                               "   a_Color = v_Color;\n"
-                                               "}\n"
-                                               "\n";
 
 int main() {
     GameData data = {};
@@ -155,62 +127,79 @@ int main() {
 
     Renderer_SetClearColor(data.Renderer, 51, 51, 51);
 
-    data.VertexColorShader = Shader_Create(data.Renderer, ColorVertexShaderSource, ColorFragmentShaderSource);
-    if (data.VertexColorShader == nil) {
+    data.ColorShader =
+        Shader_Create(data.Renderer, "assets/shaders/ColorShader.vert.glsl", "assets/shaders/ColorShader.frag.glsl");
+    if (data.ColorShader == nil) {
         fflush(stdout);
         fprintf(stderr, "Failed to create color shader!\n");
         return EXIT_FAILURE;
     }
 
-    struct {
-        struct {
-            f32 x, y, z;
-        } Position;
-        struct {
-            u8 r, g, b, a;
-        } Color;
-    } vertices[] = {
-        { { .x = +0.0f, .y = +0.5f, .z = 0.0f }, { .r = 255, .g = 0, .b = 0, .a = 255 } },
-        { { .x = +0.5f, .y = -0.5f, .z = 0.0f }, { .r = 0, .g = 0, .b = 255, .a = 255 } },
-        { { .x = -0.5f, .y = -0.5f, .z = 0.0f }, { .r = 0, .g = 255, .b = 0, .a = 255 } },
-    };
-
-    VertexBufferLayoutType verticesLayoutTypes[] = {
-        VertexBufferType_Float3,
-        VertexBufferType_UByte4,
-    };
-
-    u8 verticesLayoutNormalized[] = {
-        FALSE,
-        TRUE,
-    };
-
-    _Static_assert(ArrayCount(verticesLayoutTypes) == ArrayCount(verticesLayoutNormalized), "These must be the same");
-
-    VertexBufferLayout verticesLayout = {
-        .Types        = verticesLayoutTypes,
-        .Normalized   = verticesLayoutNormalized,
-        .ElementCount = ArrayCount(verticesLayoutTypes),
-    };
-
-    data.TriangleVertexBuffer = VertexBuffer_Create(data.Renderer, vertices, sizeof(vertices), verticesLayout);
-    if (data.TriangleVertexBuffer == nil) {
+    data.CircleShader =
+        Shader_Create(data.Renderer, "assets/shaders/CircleShader.vert.glsl", "assets/shaders/CircleShader.frag.glsl");
+    if (data.CircleShader == nil) {
         fflush(stdout);
-        fprintf(stderr, "Failed to create triangle vertex buffer!\n");
+        fprintf(stderr, "Failed to create circle shader!\n");
         return EXIT_FAILURE;
     }
 
-    u32 indices[] = {
-        0,
-        1,
-        2,
-    };
+    {
+        typedef struct CircleShaderVertex {
+            struct {
+                f32 x, y;
+            } Position;
+            struct {
+                u8 r, g, b, a;
+            } Color;
+            struct {
+                f32 x, y;
+            } Coord;
+        } CircleShaderVertex;
 
-    data.TriangleIndexBuffer = IndexBuffer_Create(data.Renderer, indices, ArrayCount(indices));
-    if (data.TriangleIndexBuffer == nil) {
-        fflush(stdout);
-        fprintf(stderr, "Failed to create triangle index buffer!\n");
-        return EXIT_FAILURE;
+        CircleShaderVertex vertices[] = {
+            { { -0.5f, +0.5f }, { 150, 0, 0, 255 }, { -1.0f, +1.0f } },
+            { { +0.5f, +0.5f }, { 150, 0, 0, 255 }, { +1.0f, +1.0f } },
+            { { +0.5f, -0.5f }, { 150, 0, 0, 255 }, { +1.0f, -1.0f } },
+            { { -0.5f, -0.5f }, { 150, 0, 0, 255 }, { -1.0f, -1.0f } },
+        };
+
+        u32 indices[] = {
+            0, 1, 2, 0, 2, 3,
+        };
+
+        VertexBufferLayoutType layoutTypes[] = {
+            VertexBufferType_Float2,
+            VertexBufferType_UByte4,
+            VertexBufferType_Float2,
+        };
+
+        b8 layoutNormalized[] = {
+            FALSE,
+            TRUE,
+            FALSE,
+        };
+
+        _Static_assert(ArrayCount(layoutTypes) == ArrayCount(layoutNormalized), "These must be the same");
+
+        VertexBufferLayout layout = {
+            .Types        = layoutTypes,
+            .Normalized   = layoutNormalized,
+            .ElementCount = ArrayCount(layoutTypes),
+        };
+
+        data.CircleVertexBuffer = VertexBuffer_Create(data.Renderer, vertices, sizeof(vertices), layout);
+        if (data.CircleVertexBuffer == nil) {
+            fflush(stdout);
+            fprintf(stderr, "Failed to create circle vertex buffer!\n");
+            return EXIT_FAILURE;
+        }
+
+        data.CircleIndexBuffer = IndexBuffer_Create(data.Renderer, indices, ArrayCount(indices));
+        if (data.CircleIndexBuffer == nil) {
+            fflush(stdout);
+            fprintf(stderr, "Failed to create circle index buffer!\n");
+            return EXIT_FAILURE;
+        }
     }
 
     Window_Show(data.Window);
@@ -244,10 +233,8 @@ int main() {
 
     Window_Hide(data.Window);
 
-    VertexBuffer_Destroy(data.TriangleVertexBuffer);
-    IndexBuffer_Destroy(data.TriangleIndexBuffer);
-
-    Shader_Destroy(data.VertexColorShader);
+    Shader_Destroy(data.CircleShader);
+    Shader_Destroy(data.ColorShader);
 
     Renderer_Destroy(data.Renderer);
     Window_Destroy(data.Window);

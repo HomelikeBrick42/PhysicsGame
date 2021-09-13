@@ -7,7 +7,7 @@
 
 typedef struct OpenGLShader OpenGLShader;
 
-OpenGLShader* OpenGLShader_Create(OpenGLRenderer* renderer, const char* vertexShaderSource, const char* fragmentShaderSource);
+OpenGLShader* OpenGLShader_Create(OpenGLRenderer* renderer, const char* vertexShaderPath, const char* fragmentShaderPath);
 void OpenGLShader_Destroy(OpenGLShader* shader);
 
 void OpenGLShader_Bind(OpenGLShader* shader);

@@ -181,14 +181,13 @@ static void FixedUpdate(GameData* data, f32 dt) {
     // Points
     {
         for (u64 i = 0; i < Array_GetLength(data->Points); i++) {
-            Point* pointA = data->Points[i];
+            Point* point = data->Points[i];
 
-            Vector2f velocity    = Vector2f_Sub(pointA->Position, pointA->LastPosition);
-            pointA->LastPosition = pointA->Position;
-            if (!pointA->Fixed) {
-                pointA->Position = Vector2f_Add(pointA->Position, velocity);
-                pointA->Position.y -= 0.01f; // Gravity
-                continue;
+            Vector2f velocity    = Vector2f_Sub(point->Position, point->LastPosition);
+            point->LastPosition = point->Position;
+            if (!point->Fixed) {
+                point->Position = Vector2f_Add(point->Position, velocity);
+                point->Position.y -= 0.01f; // Gravity
             }
         }
     }

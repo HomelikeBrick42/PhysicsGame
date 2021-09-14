@@ -44,6 +44,15 @@ INLINE Vector2f Vector2f_Div(Vector2f a, Vector2f b) {
     return result;
 }
 
+INLINE f32 Vector2f_SqrLength(Vector2f v) {
+    return v.x * v.x + v.y * v.y;
+}
+
 INLINE f32 Vector2f_Length(Vector2f v) {
-    return sqrtf(v.x * v.x + v.y * v.y);
+    return sqrtf(Vector2f_SqrLength(v));
+}
+
+INLINE Vector2f Vector2f_Normalized(Vector2f v) {
+    f32 length = sqrtf(Vector2f_SqrLength(v));
+    return Vector2f_Div(v, (Vector2f){ .x = length, .y = length });
 }

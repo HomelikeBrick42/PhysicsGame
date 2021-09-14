@@ -32,12 +32,14 @@ void* Array_Push_(void* array, void* value) {
 
         memcpy(newHeader, header, COUNT * sizeof(u64) + header[LENGTH] * header[ELEMENT_SIZE]);
         newHeader[CAPACITY] = newCapacity;
+        newHeader[LENGTH] = header[LENGTH];
         free(header);
         header = newHeader;
         array = header + COUNT;
     }
 
-    memcpy(&(cast(u8*) array)[header[LENGTH]++ * header[ELEMENT_SIZE]], value, header[ELEMENT_SIZE]);
+    memcpy(&(cast(u8*) array)[header[LENGTH] * header[ELEMENT_SIZE]], value, header[ELEMENT_SIZE]);
+    header[LENGTH] += 1;
     return array;
 }
 

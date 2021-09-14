@@ -15,5 +15,5 @@ void main() {
     v_Color = a_Color;
     v_Coord = a_Coord;
     // TODO: Replace put inverse in renderer
-    gl_Position = u_ProjectionMatrix * inverse(u_ViewMatrix) * u_ModelMatrix * a_Position;
+    gl_Position = u_ProjectionMatrix * u_ViewMatrix * u_ModelMatrix * a_Position;
 }

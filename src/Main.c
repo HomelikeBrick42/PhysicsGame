@@ -231,9 +231,66 @@ static void FixedUpdate(GameData* data, f32 dt) {
         }
 
         for (u64 i = 0; i < Array_GetLength(data->Points); i++) {
-            Point* pointA = data->Points[i];
-            
+            Point* point = data->Points[i];
+            if (!point->Fixed) {
+                for (u64 j = 0; j < Array_GetLength(data->Sticks); j++) {
+                    Stick* stick = data->Sticks[j];
+
+                    if (stick->A == point || stick->B == point) {
+                        continue;
+                    }
+
+                    Vector2f squareUpDirection = Vector2f_Sub(stick->B->Position, stick->A->Position);
+                    f32 squareRotation         = atan2f(squareUpDirection.x, squareUpDirection.y);
+                    f32 squareHeight           = Vector2f_Length(squareUpDirection);
+
+                    Vector2f squarePosition = stick->A->Position;
+
+                    Vector2f pointRelPos = Vector2f_Sub(point->Position, squarePosition);
+
+                    f32 s = sinf(squareRotation);
+                    f32 c = cosf(squareRotation);
+
+                    Vector2f rotatedPointRelPos = {
+                        .x = pointRelPos.x * c - pointRelPos.y * s,
+                        .y = pointRelPos.x * s + pointRelPos.y * c,
+                    };
+
+                    Vector2f rotatedClosestPoint = rotatedPointRelPos;
+                    if (rotatedClosestPoint.x < -stick->Width * 0.5f) {
+                        rotatedClosestPoint.x = -stick->Width * 0.5f;
+                    } else if (rotatedClosestPoint.x > stick->Width * 0.5f) {
+                        rotatedClosestPoint.x = stick->Width * 0.5f;
+                    }
+
+                    if (rotatedClosestPoint.y < 0.0f) {
+                        rotatedClosestPoint.y = 0.0f;
+                    } else if (rotatedClosestPoint.y > squareHeight) {
+                        rotatedClosestPoint.y = squareHeight;
+                    }
+
+                    s = sinf(-squareRotation);
+                    c = cosf(-squareRotation);
+
+                    Vector2f closestPoint = {
+                        .x = (rotatedClosestPoint.x * c - rotatedClosestPoint.y * s) + squarePosition.x,
+                        .y = (rotatedClosestPoint.x * s + rotatedClosestPoint.y * c) + squarePosition.y,
+                    };
+
+                    Vector2f direction = Vector2f_Sub(closestPoint, point->Position);
+                    f32 sqrDistance    = Vector2f_SqrLength(direction);
+                    if (sqrDistance < point->Radius * point->Radius) {
+                        f32 distance   = sqrtf(sqrDistance);
+                        f32 difference = point->Radius - distance;
+                        f32 percent    = difference / distance * 0.5f;
+                        Vector2f offset = Vector2f_Mul(direction, (Vector2f){ .x = percent, .y = percent });
+                        point->Position = Vector2f_Sub(point->Position, offset);
+                    }
+                }
+            }
+
             for (u64 j = i + 1; j < Array_GetLength(data->Points); j++) {
+                Point* pointA = point;
                 Point* pointB = data->Points[j];
 
                 Vector2f direction = Vector2f_Sub(pointB->Position, pointA->Position);
@@ -478,7 +535,7 @@ int main() {
 
     {
         Point* point        = calloc(1, sizeof(Point));
-        point->Position.x   = 6.5f;
+        point->Position.x   = 5.8f;
         point->Position.y   = 10.0f;
         point->LastPosition = point->Position;
         point->Radius       = 1.0f;

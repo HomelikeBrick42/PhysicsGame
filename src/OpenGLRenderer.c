@@ -116,7 +116,7 @@ void OpenGLRenderer_Clear(OpenGLRenderer* renderer) {
 }
 
 void OpenGLRenderer_BeginFrameFunc(OpenGLRenderer* renderer, Matrix4x4f viewMatrix, Matrix4x4f projectionMatrix) {
-    renderer->ViewMatrix = viewMatrix;
+    renderer->ViewMatrix = Matrix4x4f_Inverse(viewMatrix);
     renderer->ProjectionMatrix = projectionMatrix;
 }
 

@@ -41,6 +41,7 @@ typedef struct GameData {
     Vector2f CameraPosition;
     f32 CameraScale;
     f32 Delta;
+    Vector2f WorldMousePos;
     b8 WPressed, APressed, SPressed, DPressed;
     Array(Point*) Points; // These are pointers because stick keeps a pointer to the points
     Array(Stick*) Sticks;
@@ -64,7 +65,18 @@ static void ResizeCallback(Window* window, u32 width, u32 height) {
 }
 
 static void MousePositionCallback(Window* window, s32 xPos, s32 yPos) {
-    // GameData* data = Window_GetUserData(window);
+    GameData* data = Window_GetUserData(window);
+    u32 width, height;
+    Window_GetSize(data->Window, &width, &height);
+    Vector2f pos = {
+        .x = cast(f32) xPos / cast(f32) width * 2.0f - 1.0f,
+        .y = -(cast(f32) yPos / cast(f32) height * 2.0f - 1.0f),
+    };
+
+    data->WorldMousePos = Matrix4x4f_MultiplyVector2f(
+        Matrix4x4f_Inverse(
+            Matrix4x4f_Multiply(data->ProjectionMatrix, Matrix4x4f_Inverse(Matrix4x4f_Translation(data->CameraPosition)))),
+        pos);
 }
 
 static void MouseMoveCallback(Window* window, s32 xDelta, s32 yDelta) {
@@ -116,6 +128,17 @@ static void KeyCallback(Window* window, KeyCode key, b8 pressed) {
 
         case KeyCode_D: {
             data->DPressed = pressed;
+        } break;
+
+        case KeyCode_R: {
+            if (pressed) {
+                Point* point        = calloc(1, sizeof(Point));
+                point->Position     = data->WorldMousePos;
+                point->LastPosition = point->Position;
+                point->Radius       = 0.2f;
+                point->Fixed        = FALSE;
+                Array_Push(data->Points, point);
+            }
         } break;
 
         default: {
@@ -183,7 +206,7 @@ static void FixedUpdate(GameData* data, f32 dt) {
         for (u64 i = 0; i < Array_GetLength(data->Points); i++) {
             Point* point = data->Points[i];
 
-            Vector2f velocity    = Vector2f_Sub(point->Position, point->LastPosition);
+            Vector2f velocity   = Vector2f_Sub(point->Position, point->LastPosition);
             point->LastPosition = point->Position;
             if (!point->Fixed) {
                 point->Position = Vector2f_Add(point->Position, velocity);

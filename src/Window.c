@@ -94,7 +94,7 @@ static LRESULT CALLBACK WindowCallback(HWND windowHandle, UINT message, WPARAM w
             case WM_MOUSEMOVE: {
                 if (!window->MouseDisabled && window->MousePositionCallback != nil) {
                     s32 mouseX = GET_X_LPARAM(lParam);
-                    s32 mouseY = GET_X_LPARAM(lParam);
+                    s32 mouseY = GET_Y_LPARAM(lParam);
                     window->MousePositionCallback(window, mouseX, mouseY);
                 }
             } break;
@@ -109,7 +109,7 @@ static LRESULT CALLBACK WindowCallback(HWND windowHandle, UINT message, WPARAM w
                     RAWINPUT* input = cast(RAWINPUT*) bytes;
 
                     s32 mouseX = input->data.mouse.lLastX;
-                    s32 mouseY = -input->data.mouse.lLastY;
+                    s32 mouseY = input->data.mouse.lLastY;
                     window->MouseMoveCallback(window, mouseX, mouseY);
                 }
             } break;

@@ -16,7 +16,6 @@ typedef struct Point {
     Vector2f Position;
     Vector2f LastPosition;
     f32 Radius;
-    f32 Mass;
     b8 Fixed;
 } Point;
 
@@ -194,9 +193,9 @@ static void FixedUpdate(GameData* data, f32 dt) {
         }
     }
 
-    const u64 SimulationCount = 2;
+    const u64 SimulationCount        = 10;
+    const f32 InverseSimulationCount = 1.0f / cast(f32) SimulationCount;
     for (u64 simulationIndex = 0; simulationIndex < SimulationCount; simulationIndex++) {
-
         // Sticks
         {
             for (u64 i = 0; i < Array_GetLength(data->Sticks); i++) {
@@ -211,18 +210,18 @@ static void FixedUpdate(GameData* data, f32 dt) {
                 f32 difference     = stick->Length - distance;
 
                 if (!stick->A->Fixed && !stick->B->Fixed) {
-                    f32 percent     = difference / distance * 0.5f * stick->Springiness;
+                    f32 percent     = difference / distance * 0.5f * stick->Springiness * InverseSimulationCount;
                     Vector2f offset = Vector2f_Mul(direction, (Vector2f){ .x = percent, .y = percent });
 
                     stick->A->Position = Vector2f_Sub(stick->A->Position, offset);
                     stick->B->Position = Vector2f_Add(stick->B->Position, offset);
                 } else if (stick->A->Fixed) {
-                    f32 percent     = difference / distance * stick->Springiness;
+                    f32 percent     = difference / distance * stick->Springiness * InverseSimulationCount;
                     Vector2f offset = Vector2f_Mul(direction, (Vector2f){ .x = percent, .y = percent });
 
                     stick->B->Position = Vector2f_Add(stick->B->Position, offset);
                 } else if (stick->B->Fixed) {
-                    f32 percent     = difference / distance * stick->Springiness;
+                    f32 percent     = difference / distance * stick->Springiness * InverseSimulationCount;
                     Vector2f offset = Vector2f_Mul(direction, (Vector2f){ .x = percent, .y = percent });
 
                     stick->A->Position = Vector2f_Sub(stick->A->Position, offset);
@@ -269,6 +268,8 @@ static void FixedUpdate(GameData* data, f32 dt) {
                         rotatedClosestPoint.y = squareHeight;
                     }
 
+                    f32 distanceToPointA = rotatedClosestPoint.y / squareHeight;
+
                     s = sinf(-squareRotation);
                     c = cosf(-squareRotation);
 
@@ -280,11 +281,23 @@ static void FixedUpdate(GameData* data, f32 dt) {
                     Vector2f direction = Vector2f_Sub(closestPoint, point->Position);
                     f32 sqrDistance    = Vector2f_SqrLength(direction);
                     if (sqrDistance < point->Radius * point->Radius) {
-                        f32 distance   = sqrtf(sqrDistance);
-                        f32 difference = point->Radius - distance;
-                        f32 percent    = difference / distance * 0.5f;
+                        f32 distance    = sqrtf(sqrDistance);
+                        f32 difference  = point->Radius - distance;
+                        f32 percent     = difference / distance * 0.5f * InverseSimulationCount;
                         Vector2f offset = Vector2f_Mul(direction, (Vector2f){ .x = percent, .y = percent });
                         point->Position = Vector2f_Sub(point->Position, offset);
+
+                        if (!stick->A->Fixed) {
+                            stick->A->Position = Vector2f_Add(
+                                stick->A->Position,
+                                Vector2f_Mul(offset, (Vector2f){ .x = 1.0f - distanceToPointA, .y = 1.0f - distanceToPointA }));
+                        }
+
+                        if (!stick->B->Fixed) {
+                            stick->B->Position =
+                                Vector2f_Add(stick->B->Position,
+                                             Vector2f_Mul(offset, (Vector2f){ .x = distanceToPointA, .y = distanceToPointA }));
+                        }
                     }
                 }
             }
@@ -298,7 +311,7 @@ static void FixedUpdate(GameData* data, f32 dt) {
                 if (sqrDistance < (pointA->Radius + pointB->Radius) * (pointA->Radius + pointB->Radius)) {
                     f32 distance    = sqrtf(sqrDistance);
                     f32 difference  = (pointA->Radius + pointB->Radius) - distance;
-                    f32 percent     = difference / distance * 0.5f;
+                    f32 percent     = difference / distance * 0.5f * InverseSimulationCount;
                     Vector2f offset = Vector2f_Mul(direction, (Vector2f){ .x = percent, .y = percent });
                     if (!pointA->Fixed && !pointB->Fixed) {
                         pointA->Position = Vector2f_Sub(pointA->Position, offset);
@@ -477,8 +490,7 @@ int main() {
         Point* point        = calloc(1, sizeof(Point));
         point->Position.x   = -9.0f;
         point->LastPosition = point->Position;
-        point->Radius       = 0.5f;
-        point->Mass         = 1.0f;
+        point->Radius       = 0.2f;
         point->Fixed        = TRUE;
         Array_Push(data.Points, point);
     }
@@ -487,8 +499,7 @@ int main() {
         Point* point        = calloc(1, sizeof(Point));
         point->Position.x   = -6.0f;
         point->LastPosition = point->Position;
-        point->Radius       = 0.5f;
-        point->Mass         = 1.0f;
+        point->Radius       = 0.2f;
         point->Fixed        = FALSE;
         Array_Push(data.Points, point);
     }
@@ -497,8 +508,7 @@ int main() {
         Point* point        = calloc(1, sizeof(Point));
         point->Position.x   = -3.0f;
         point->LastPosition = point->Position;
-        point->Radius       = 0.5f;
-        point->Mass         = 1.0f;
+        point->Radius       = 0.2f;
         point->Fixed        = FALSE;
         Array_Push(data.Points, point);
     }
@@ -507,8 +517,7 @@ int main() {
         Point* point        = calloc(1, sizeof(Point));
         point->Position.x   = 3.0f;
         point->LastPosition = point->Position;
-        point->Radius       = 0.5f;
-        point->Mass         = 1.0f;
+        point->Radius       = 0.2f;
         point->Fixed        = FALSE;
         Array_Push(data.Points, point);
     }
@@ -517,8 +526,7 @@ int main() {
         Point* point        = calloc(1, sizeof(Point));
         point->Position.x   = 6.0f;
         point->LastPosition = point->Position;
-        point->Radius       = 0.5f;
-        point->Mass         = 1.0f;
+        point->Radius       = 0.2f;
         point->Fixed        = FALSE;
         Array_Push(data.Points, point);
     }
@@ -527,19 +535,47 @@ int main() {
         Point* point        = calloc(1, sizeof(Point));
         point->Position.x   = 9.0f;
         point->LastPosition = point->Position;
-        point->Radius       = 0.5f;
-        point->Mass         = 1.0f;
+        point->Radius       = 0.2f;
         point->Fixed        = TRUE;
         Array_Push(data.Points, point);
     }
 
     {
         Point* point        = calloc(1, sizeof(Point));
-        point->Position.x   = 5.8f;
-        point->Position.y   = 10.0f;
+        point->Position.x   = 0.0f;
+        point->Position.y   = 50.0f;
         point->LastPosition = point->Position;
-        point->Radius       = 1.0f;
-        point->Mass         = 1.0f;
+        point->Radius       = 1.5f;
+        point->Fixed        = FALSE;
+        Array_Push(data.Points, point);
+    }
+
+    {
+        Point* point        = calloc(1, sizeof(Point));
+        point->Position.x   = -2.0f;
+        point->Position.y   = 1.5f;
+        point->LastPosition = point->Position;
+        point->Radius       = 0.2f;
+        point->Fixed        = FALSE;
+        Array_Push(data.Points, point);
+    }
+
+    {
+        Point* point        = calloc(1, sizeof(Point));
+        point->Position.x   = 0.0f;
+        point->Position.y   = 4.5f;
+        point->LastPosition = point->Position;
+        point->Radius       = 0.2f;
+        point->Fixed        = FALSE;
+        Array_Push(data.Points, point);
+    }
+
+    {
+        Point* point        = calloc(1, sizeof(Point));
+        point->Position.x   = 2.0f;
+        point->Position.y   = 1.5f;
+        point->LastPosition = point->Position;
+        point->Radius       = 0.2f;
         point->Fixed        = FALSE;
         Array_Push(data.Points, point);
     }
@@ -549,7 +585,7 @@ int main() {
         stick->A           = data.Points[0];
         stick->B           = data.Points[1];
         stick->Length      = 3.0f;
-        stick->Springiness = 0.1f;
+        stick->Springiness = 0.3f;
         stick->Width       = 0.25f;
         Array_Push(data.Sticks, stick);
     }
@@ -559,7 +595,7 @@ int main() {
         stick->A           = data.Points[1];
         stick->B           = data.Points[2];
         stick->Length      = 3.0f;
-        stick->Springiness = 0.1f;
+        stick->Springiness = 0.3f;
         stick->Width       = 0.25f;
         Array_Push(data.Sticks, stick);
     }
@@ -569,7 +605,7 @@ int main() {
         stick->A           = data.Points[2];
         stick->B           = data.Points[3];
         stick->Length      = 3.0f;
-        stick->Springiness = 0.1f;
+        stick->Springiness = 0.3f;
         stick->Width       = 0.25f;
         Array_Push(data.Sticks, stick);
     }
@@ -579,7 +615,7 @@ int main() {
         stick->A           = data.Points[3];
         stick->B           = data.Points[4];
         stick->Length      = 3.0f;
-        stick->Springiness = 0.1f;
+        stick->Springiness = 0.3f;
         stick->Width       = 0.25f;
         Array_Push(data.Sticks, stick);
     }
@@ -589,7 +625,37 @@ int main() {
         stick->A           = data.Points[4];
         stick->B           = data.Points[5];
         stick->Length      = 3.0f;
-        stick->Springiness = 0.1f;
+        stick->Springiness = 0.3f;
+        stick->Width       = 0.25f;
+        Array_Push(data.Sticks, stick);
+    }
+
+    {
+        Stick* stick       = calloc(1, sizeof(Stick));
+        stick->A           = data.Points[7];
+        stick->B           = data.Points[8];
+        stick->Length      = 3.0f;
+        stick->Springiness = 0.3f;
+        stick->Width       = 0.25f;
+        Array_Push(data.Sticks, stick);
+    }
+
+    {
+        Stick* stick       = calloc(1, sizeof(Stick));
+        stick->A           = data.Points[8];
+        stick->B           = data.Points[9];
+        stick->Length      = 3.0f;
+        stick->Springiness = 0.3f;
+        stick->Width       = 0.25f;
+        Array_Push(data.Sticks, stick);
+    }
+
+    {
+        Stick* stick       = calloc(1, sizeof(Stick));
+        stick->A           = data.Points[9];
+        stick->B           = data.Points[7];
+        stick->Length      = 3.0f;
+        stick->Springiness = 0.3f;
         stick->Width       = 0.25f;
         Array_Push(data.Sticks, stick);
     }

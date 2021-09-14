@@ -12,6 +12,10 @@ add_compile_options(-Werror -Wno-unused-parameter)
 
 add_compile_options(-D_USE_MATH_DEFINES -D_CRT_SECURE_NO_WARNINGS)
 
+if (CMAKE_BUILD_TYPE MATCHES Release)
+    add_compile_options(-O3)
+endif ()
+
 include_directories(src)
 
 add_executable(

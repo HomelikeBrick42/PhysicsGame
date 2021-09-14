@@ -203,18 +203,18 @@ static void FixedUpdate(GameData* data, f32 dt) {
             f32 difference     = stick->Length - distance;
 
             if (!stick->A->Fixed && !stick->B->Fixed) {
-                f32 percent     = difference / distance * 0.5f;
+                f32 percent     = difference / distance * 0.5f * stick->Springiness;
                 Vector2f offset = Vector2f_Mul(direction, (Vector2f){ .x = percent, .y = percent });
 
                 stick->A->Position = Vector2f_Sub(stick->A->Position, offset);
                 stick->B->Position = Vector2f_Add(stick->B->Position, offset);
             } else if (stick->A->Fixed) {
-                f32 percent     = difference / distance;
+                f32 percent     = difference / distance * stick->Springiness;
                 Vector2f offset = Vector2f_Mul(direction, (Vector2f){ .x = percent, .y = percent });
 
                 stick->B->Position = Vector2f_Add(stick->B->Position, offset);
             } else if (stick->B->Fixed) {
-                f32 percent     = difference / distance;
+                f32 percent     = difference / distance * stick->Springiness;
                 Vector2f offset = Vector2f_Mul(direction, (Vector2f){ .x = percent, .y = percent });
 
                 stick->A->Position = Vector2f_Sub(stick->A->Position, offset);
@@ -394,7 +394,7 @@ int main() {
         Point* point        = calloc(1, sizeof(Point));
         point->Position.x   = 3.0f;
         point->LastPosition = point->Position;
-        point->LastPosition.x -= 0.1f;
+        point->LastPosition.x -= 0.3f;
         point->LastPosition.y -= 0.1f;
         point->Radius = 1.0f;
         point->Mass   = 1.0f;
@@ -406,6 +406,7 @@ int main() {
         stick->A      = data.Points[0];
         stick->B      = data.Points[1];
         stick->Length = 6.0f;
+        stick->Springiness = 0.05f;
         Array_Push(data.Sticks, stick);
     }
 
